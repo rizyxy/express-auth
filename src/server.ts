@@ -13,6 +13,34 @@ const prisma = new PrismaClient();
 
 const port = 3000;
 
+const verifyJwt = function (req: JWTRequest, res: express.Response, next: express.NextFunction) {
+try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ error: "No authorization header provided" });
+        }
+
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: "Token not found" });
+        }
+
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            return res.status(500).json({ error: "JWT secret not configured" });
+        }
+
+        const decoded = jwt.verify(token, jwtSecret);
+        (req as any).auth = decoded; // Attach the decoded payload to the request object
+        next();
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            return res.status(401).json({ error: "Invalid token" });
+        }
+        res.status(500).json({ error: "Server error" });
+    }
+}
+
 app.get('/', (_, res) => {
     res.send("Express Auth with JWT Example");
 });
@@ -91,7 +119,9 @@ app.post('/login', async (req, res) => {
 
         if (bcrypt.compareSync(password, user.password)) {
             const payload = {
-                'id': user.id
+                'id': user.id,
+                'name': user.name,
+                'email': user.email
             }
 
             if (!process.env.JWT_SECRET) {
@@ -101,7 +131,7 @@ app.post('/login', async (req, res) => {
             const token = jwt.sign(payload, process.env.JWT_SECRET);
 
             return res.json({
-                "token": token
+                "token": `Bearer ${token}`
             });
         }
 
@@ -112,6 +142,22 @@ app.post('/login', async (req, res) => {
         res.status(500).json(error);
     } finally {
         prisma.$disconnect();
+    }
+});
+
+app.get('/protected', verifyJwt, (req, res) => {
+    try {
+        const decodedPayload = (req as any).auth;
+        // The user details are now directly in the token payload.
+        const user = {
+            id: decodedPayload.id,
+            name: decodedPayload.name,
+            email: decodedPayload.email,
+        };
+
+        res.json({ message: "Access granted!", user });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to process user data from token" });
     }
 });
 
