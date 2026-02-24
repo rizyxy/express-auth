@@ -3,6 +3,8 @@ import UserRepository from "../repositories/user.repository";
 import { LoginData, RegisterData } from "../schema/auth.schema";
 import bcrypt from "bcrypt";
 import TokenService, { TokenType } from "./token.service";
+import TokenRepository from "../repositories/token.repository";
+import { TokenStatus } from "../../generated/prisma/enums";
 
 const AuthService = {
     async register(data: RegisterData) {
@@ -43,9 +45,23 @@ const AuthService = {
     async refreshToken(token: string) {
         const tokenData = TokenService.verifyToken(token);
 
+        const existingToken = await TokenRepository.findByToken(token);
+
+        if (!existingToken) {
+            throw new AppError(`Invalid token`, 401);
+        }
+
+        if (existingToken.status === TokenStatus.EXPIRED) {
+            await TokenRepository.deleteByUserId(existingToken.userId);
+
+            throw new AppError(`Token expired`, 401);
+        }
+
         if (tokenData.tokenType !== TokenType.REFRESH) {
             throw new AppError(`Invalid token`, 401);
         }
+
+        await TokenRepository.updateStatusByToken(token, TokenStatus.EXPIRED);
 
         const user = await UserRepository.findByEmail(tokenData.email);
 

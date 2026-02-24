@@ -1,3 +1,4 @@
+import { TokenStatus } from "../../generated/prisma/enums";
 import { prisma } from "../lib/prisma";
 
 const TokenRepository = {
@@ -10,6 +11,33 @@ const TokenRepository = {
                 token,
                 userId,
                 expiresAt
+            }
+        });
+    },
+
+    async findByToken(token: string) {
+        return await prisma.refreshToken.findFirstOrThrow({
+            where: {
+                token
+            }
+        });
+    },
+
+    async deleteByUserId(userId: string) {
+        return await prisma.refreshToken.deleteMany({
+            where: {
+                userId
+            }
+        });
+    },
+
+    async updateStatusByToken(token: string, status: TokenStatus) {
+        return await prisma.refreshToken.update({
+            where: {
+                token
+            },
+            data: {
+                status
             }
         });
     }
