@@ -2,6 +2,7 @@ import { AppError } from "../middleware/error-handler";
 import UserRepository from "../repositories/user.repository";
 import { LoginData, RegisterData } from "../schema/auth.schema";
 import bcrypt from "bcrypt";
+import TokenService from "./token.service";
 
 const AuthService = {
     async register(data: RegisterData) {
@@ -34,7 +35,9 @@ const AuthService = {
             throw new AppError("Invalid email or password", 404);
         }
 
-        return user;
+        const { accessToken, refreshToken } = await TokenService.issueAccessAndRefreshToken(user);
+
+        return { accessToken, refreshToken };
     }
 }
 

@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { CookieOptions, Request, Response } from "express"
 import { LoginSchema, RegisterSchema } from "../schema/auth.schema";
 import AuthService from "../services/auth.service";
 import { AppError } from "../middleware/error-handler";
@@ -23,9 +23,26 @@ const AuthController = {
             throw new AppError("Invalid request", 400);
         }
 
-        await AuthService.login(loginData.data);
+        const { accessToken, refreshToken } = await AuthService.login(loginData.data);
 
-        return res.status(200).json({ message: "User logged in successfully" });
+        const isProd = process.env.NODE_ENV === "production";
+        const commonOptions: CookieOptions = {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: "strict",
+            path: "/",
+        };
+
+        res.cookie("x-refresh-token", `Bearer ${refreshToken}`, {
+            ...commonOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.cookie("x-access-token", `Bearer ${accessToken}`, commonOptions);
+
+        return res.status(200).json({
+            message: "Logged in successfully",
+        });
     }
 }
 
