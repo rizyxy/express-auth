@@ -29,7 +29,21 @@ const TokenService = {
         }
 
         return { accessToken, refreshToken };
-    }
+    },
+
+    verifyToken(token: string): JwtPayload {
+        if (!process.env.JWT_SECRET) {
+            throw new AppError("Token service error", 500);
+        }
+
+        const payload = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+
+        if (!payload) {
+            throw new AppError("Invalid token", 400);
+        }
+
+        return payload;
+    },
 }
 
 export default TokenService;

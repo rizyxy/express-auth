@@ -2,7 +2,7 @@ import { AppError } from "../middleware/error-handler";
 import UserRepository from "../repositories/user.repository";
 import { LoginData, RegisterData } from "../schema/auth.schema";
 import bcrypt from "bcrypt";
-import TokenService from "./token.service";
+import TokenService, { TokenType } from "./token.service";
 
 const AuthService = {
     async register(data: RegisterData) {
@@ -33,6 +33,24 @@ const AuthService = {
 
         if (!isPasswordValid) {
             throw new AppError("Invalid email or password", 404);
+        }
+
+        const { accessToken, refreshToken } = await TokenService.issueAccessAndRefreshToken(user);
+
+        return { accessToken, refreshToken };
+    },
+
+    async refreshToken(token: string) {
+        const tokenData = TokenService.verifyToken(token);
+
+        if (tokenData.tokenType !== TokenType.REFRESH) {
+            throw new AppError(`Invalid token`, 401);
+        }
+
+        const user = await UserRepository.findByEmail(tokenData.email);
+
+        if (!user) {
+            throw new AppError("User not found", 404);
         }
 
         const { accessToken, refreshToken } = await TokenService.issueAccessAndRefreshToken(user);

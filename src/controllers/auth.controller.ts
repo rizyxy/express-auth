@@ -43,6 +43,35 @@ const AuthController = {
         return res.status(200).json({
             message: "Logged in successfully",
         });
+    },
+
+    async refreshToken(req: Request, res: Response) {
+        const token = req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+            throw new AppError("Unauthorized", 401);
+        }
+
+        const { accessToken, refreshToken } = await AuthService.refreshToken(token);
+
+        const isProd = process.env.NODE_ENV === "production";
+        const commonOptions: CookieOptions = {
+            httpOnly: true,
+            secure: isProd,
+            sameSite: "strict",
+            path: "/",
+        };
+
+        res.cookie("x-refresh-token", `Bearer ${refreshToken}`, {
+            ...commonOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.cookie("x-access-token", `Bearer ${accessToken}`, commonOptions);
+
+        return res.status(200).json({
+            message: "Refresh token successfully",
+        });
     }
 }
 

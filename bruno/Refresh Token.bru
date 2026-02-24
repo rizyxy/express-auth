@@ -1,0 +1,24 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:3000/auth/refresh-token
+  body: json
+  auth: bearer
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5NmFlNzg2Ni1lZTI3LTQ4N2ItYTcwNi0yMzI2MGExOWFkOWMiLCJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzcxOTQ4MDc3LCJleHAiOjE3NzI1NTI4Nzd9.sqi8FEZ_4UFZkgN4SQfazkCXk26Z8qAlNkto5GPQt9U
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI5NmFlNzg2Ni1lZTI3LTQ4N2ItYTcwNi0yMzI2MGExOWFkOWMiLCJ0b2tlblR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzcxOTQ4MDc3LCJleHAiOjE3NzI1NTI4Nzd9.sqi8FEZ_4UFZkgN4SQfazkCXk26Z8qAlNkto5GPQt9U
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
