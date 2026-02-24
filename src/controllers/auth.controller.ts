@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { RegisterSchema } from "../schema/auth.schema";
+import { LoginSchema, RegisterSchema } from "../schema/auth.schema";
 import AuthService from "../services/auth.service";
 
 const AuthController = {
@@ -13,6 +13,18 @@ const AuthController = {
         await AuthService.register(registerData.data);
 
         return res.status(201).json({ message: "User registered successfully" });
+    },
+
+    async login(req: Request, res: Response) {
+        const loginData = LoginSchema.safeParse(req.body);
+
+        if (!loginData.success) {
+            return res.status(400).json({ error: loginData.error.issues });
+        }
+
+        await AuthService.login(loginData.data);
+
+        return res.status(200).json({ message: "User logged in successfully" });
     }
 }
 
