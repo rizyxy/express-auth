@@ -19,6 +19,9 @@ const TokenRepository = {
         return await prisma.refreshToken.findFirstOrThrow({
             where: {
                 token
+            },
+            include: {
+                user: true
             }
         });
     },

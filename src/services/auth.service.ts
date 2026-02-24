@@ -43,8 +43,6 @@ const AuthService = {
     },
 
     async refreshToken(token: string) {
-        const tokenData = TokenService.verifyToken(token);
-
         const existingToken = await TokenRepository.findByToken(token);
 
         if (!existingToken) {
@@ -57,19 +55,9 @@ const AuthService = {
             throw new AppError(`Token expired`, 401);
         }
 
-        if (tokenData.tokenType !== TokenType.REFRESH) {
-            throw new AppError(`Invalid token`, 401);
-        }
-
         await TokenRepository.updateStatusByToken(token, TokenStatus.EXPIRED);
 
-        const user = await UserRepository.findByEmail(tokenData.email);
-
-        if (!user) {
-            throw new AppError("User not found", 404);
-        }
-
-        const { accessToken, refreshToken } = await TokenService.issueAccessAndRefreshToken(user);
+        const { accessToken, refreshToken } = await TokenService.issueAccessAndRefreshToken(existingToken.user);
 
         return { accessToken, refreshToken };
     }
